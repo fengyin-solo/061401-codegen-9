@@ -6,9 +6,15 @@ import EventLog from '@/components/EventLog.vue'
 import GameOverModal from '@/components/GameOverModal.vue'
 import { useGame } from '@/composables/useGame'
 
-const { state, highScore, canPerformAction, gatherWood, gatherStone, hunt, drink, restart } = useGame()
+const { state, highScore, canPerformAction, isDay, isNight, gatherWood, gatherStone, hunt, drink, restart } = useGame()
 
 const isNewRecord = computed(() => state.value.turn >= highScore.value && state.value.turn > 0)
+
+const phaseLabel = computed(() => isDay.value ? '白天' : '夜晚')
+const phaseIcon = computed(() => isDay.value ? '☀️' : '🌙')
+const phaseColorClass = computed(() => isDay.value ? 'text-yellow-400' : 'text-indigo-400')
+const phaseBgClass = computed(() => isDay.value ? 'bg-yellow-500/10' : 'bg-indigo-500/10')
+const phaseBorderClass = computed(() => isDay.value ? 'border-yellow-500/30' : 'border-indigo-500/30')
 </script>
 
 <template>
@@ -28,8 +34,17 @@ const isNewRecord = computed(() => state.value.turn >= highScore.value && state.
 
       <div class="flex justify-center gap-8 mb-8">
         <div class="bg-game-card/80 backdrop-blur px-6 py-3 rounded-xl border border-game-border">
-          <span class="text-gray-400 text-sm">当前回合</span>
-          <p class="text-2xl font-bold text-white tabular-nums">{{ state.turn }}</p>
+          <span class="text-gray-400 text-sm">当前天数</span>
+          <p class="text-2xl font-bold text-white tabular-nums">第 {{ state.turn }} 天</p>
+        </div>
+        <div
+          :class="[phaseBgClass, phaseBorderClass, 'backdrop-blur px-6 py-3 rounded-xl border transition-all duration-300']"
+        >
+          <span class="text-gray-400 text-sm">当前阶段</span>
+          <p class="text-2xl font-bold tabular-nums flex items-center gap-2">
+            <span>{{ phaseIcon }}</span>
+            <span :class="phaseColorClass">{{ phaseLabel }}</span>
+          </p>
         </div>
         <div class="bg-game-card/80 backdrop-blur px-6 py-3 rounded-xl border border-game-border">
           <span class="text-gray-400 text-sm">最高纪录</span>
@@ -45,6 +60,7 @@ const isNewRecord = computed(() => state.value.turn >= highScore.value && state.
             :thirst="state.thirst"
             :wood="state.wood"
             :stone="state.stone"
+            :phase="state.phase"
           />
         </div>
 
@@ -55,6 +71,7 @@ const isNewRecord = computed(() => state.value.turn >= highScore.value && state.
             :can-hunt="canPerformAction('hunt')"
             :can-drink="canPerformAction('drink')"
             :disabled="state.isGameOver"
+            :phase="state.phase"
             @gather-wood="gatherWood"
             @gather-stone="gatherStone"
             @hunt="hunt"
@@ -68,7 +85,7 @@ const isNewRecord = computed(() => state.value.turn >= highScore.value && state.
       </div>
 
       <footer class="mt-8 text-center text-gray-500 text-sm">
-        <p>💡 提示：生命值归零或饥饿/口渴值满格则游戏结束</p>
+        <p>💡 提示：每个白天行动后自动进入夜晚结算，夜间会有额外消耗和事件</p>
       </footer>
     </div>
 
@@ -77,6 +94,7 @@ const isNewRecord = computed(() => state.value.turn >= highScore.value && state.
       :final-turn="state.turn"
       :high-score="highScore"
       :is-new-record="isNewRecord"
+      :final-phase="state.phase"
       @restart="restart"
     />
   </div>

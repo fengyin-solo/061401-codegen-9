@@ -1,3 +1,5 @@
+export type Phase = 'day' | 'night'
+
 export interface GameState {
   health: number
   hunger: number
@@ -5,6 +7,7 @@ export interface GameState {
   wood: number
   stone: number
   turn: number
+  phase: Phase
   isGameOver: boolean
   logs: LogEntry[]
 }
@@ -12,8 +15,9 @@ export interface GameState {
 export interface LogEntry {
   id: number
   text: string
-  type: 'action' | 'event' | 'system' | 'good' | 'bad'
+  type: 'action' | 'event' | 'system' | 'good' | 'bad' | 'night'
   turn: number
+  phase: Phase
 }
 
 export interface RandomEvent {

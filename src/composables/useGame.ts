@@ -1,6 +1,6 @@
-import { ref, computed, watch } from 'vue'
-import type { GameState, LogEntry, RandomEvent, ActionType, ActionEffect } from '@/types/game'
-import { randomEvents } from '@/data/events'
+import { ref, computed } from 'vue'
+import type { GameState, LogEntry, RandomEvent, ActionType, ActionEffect, Phase } from '@/types/game'
+import { dayEvents, nightEvents, nightDecay } from '@/data/events'
 
 const STORAGE_KEY_HIGH_SCORE = 'survival_game_high_score'
 const MAX_STAT = 100
@@ -30,7 +30,8 @@ export function useGame() {
     thirst: 30,
     wood: 10,
     stone: 5,
-    turn: 0,
+    turn: 1,
+    phase: 'day',
     isGameOver: false,
     logs: [],
   })
@@ -38,7 +39,9 @@ export function useGame() {
   const highScore = ref<number>(0)
   let logIdCounter = 0
 
-  const canAct = computed(() => !state.value.isGameOver)
+  const canAct = computed(() => !state.value.isGameOver && state.value.phase === 'day')
+  const isDay = computed(() => state.value.phase === 'day')
+  const isNight = computed(() => state.value.phase === 'night')
 
   function loadHighScore() {
     try {
@@ -68,6 +71,7 @@ export function useGame() {
       text,
       type,
       turn: state.value.turn,
+      phase: state.value.phase,
     })
     if (state.value.logs.length > 50) {
       state.value.logs.pop()
@@ -96,9 +100,14 @@ export function useGame() {
     }
   }
 
-  function getRandomEvent(): RandomEvent {
-    const index = Math.floor(Math.random() * randomEvents.length)
-    return randomEvents[index]
+  function getDayEvent(): RandomEvent {
+    const index = Math.floor(Math.random() * dayEvents.length)
+    return dayEvents[index]
+  }
+
+  function getNightEvent(): RandomEvent {
+    const index = Math.floor(Math.random() * nightEvents.length)
+    return nightEvents[index]
   }
 
   function checkGameOver() {
@@ -111,6 +120,7 @@ export function useGame() {
 
   function canPerformAction(action: ActionType): boolean {
     if (state.value.isGameOver) return false
+    if (state.value.phase !== 'day') return false
     const effects = actionEffects[action]
     if (effects.wood !== undefined && state.value.wood + effects.wood < 0) {
       return false
@@ -121,22 +131,48 @@ export function useGame() {
     return true
   }
 
+  function resolveNight() {
+    state.value.phase = 'night'
+
+    addLog(`—— 夜幕降临，第 ${state.value.turn} 天结束 ——`, 'night')
+
+    addLog(`夜间消耗：饥饿 +${nightDecay.hunger}，口渴 +${nightDecay.thirst}`, 'night')
+    applyEffects({ hunger: nightDecay.hunger, thirst: nightDecay.thirst })
+
+    const event = getNightEvent()
+    applyEffects(event.effects)
+
+    const eventLogType: LogEntry['type'] = event.type === 'good' ? 'good' : event.type === 'bad' ? 'bad' : 'night'
+    addLog(`🌙 ${event.text}`, eventLogType)
+
+    checkGameOver()
+
+    if (!state.value.isGameOver) {
+      state.value.turn++
+      state.value.phase = 'day'
+      addLog(`—— 第 ${state.value.turn} 天开始，天亮了 ——`, 'system')
+    }
+  }
+
   function performAction(action: ActionType) {
     if (!canPerformAction(action)) return
 
     const effects = actionEffects[action]
     applyEffects(effects)
-    state.value.turn++
 
-    addLog(`第 ${state.value.turn} 回合：${actionNames[action]}`, 'action')
+    addLog(`☀️ ${actionNames[action]}`, 'action')
 
-    const event = getRandomEvent()
-    applyEffects(event.effects)
+    const dayEvent = getDayEvent()
+    applyEffects(dayEvent.effects)
 
-    const eventLogType = event.type === 'good' ? 'good' : event.type === 'bad' ? 'bad' : 'event'
-    addLog(event.text, eventLogType)
+    const eventLogType = dayEvent.type === 'good' ? 'good' : dayEvent.type === 'bad' ? 'bad' : 'event'
+    addLog(dayEvent.text, eventLogType)
 
     checkGameOver()
+
+    if (!state.value.isGameOver) {
+      resolveNight()
+    }
   }
 
   function gatherWood() {
@@ -162,21 +198,26 @@ export function useGame() {
       thirst: 30,
       wood: 10,
       stone: 5,
-      turn: 0,
+      turn: 1,
+      phase: 'day',
       isGameOver: false,
       logs: [],
     }
     logIdCounter = 0
     addLog('你醒来发现自己身处荒野中，需要想办法生存下去...', 'system')
+    addLog('—— 第 1 天开始，天亮了 ——', 'system')
   }
 
   loadHighScore()
   addLog('你醒来发现自己身处荒野中，需要想办法生存下去...', 'system')
+  addLog('—— 第 1 天开始，天亮了 ——', 'system')
 
   return {
     state,
     highScore,
     canAct,
+    isDay,
+    isNight,
     canPerformAction,
     gatherWood,
     gatherStone,

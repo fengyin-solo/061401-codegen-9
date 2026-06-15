@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { Phase } from '@/types/game'
 import { computed } from 'vue'
 
 interface StatItem {
@@ -17,9 +18,16 @@ interface Props {
   thirst: number
   wood: number
   stone: number
+  phase: Phase
 }
 
 const props = defineProps<Props>()
+
+const phaseIcon = computed(() => props.phase === 'day' ? '☀️' : '🌙')
+const phaseLabel = computed(() => props.phase === 'day' ? '白天' : '夜晚')
+const phaseClass = computed(() => props.phase === 'day' ? 'text-yellow-400' : 'text-indigo-400')
+const phaseBorderClass = computed(() => props.phase === 'day' ? 'border-yellow-500/30' : 'border-indigo-500/30')
+const phaseBgClass = computed(() => props.phase === 'day' ? 'bg-yellow-500/10' : 'bg-indigo-500/10')
 
 const stats = computed<StatItem[]>(() => [
   {
@@ -82,10 +90,18 @@ function isDanger(value: number, max: number, isReverse?: boolean): boolean {
 
 <template>
   <div class="bg-game-card rounded-2xl p-6 border border-game-border shadow-xl">
-    <h2 class="text-xl font-bold text-white mb-5 flex items-center gap-2">
-      <span>📊</span>
-      <span>生存状态</span>
-    </h2>
+    <div class="flex items-center justify-between mb-5">
+      <h2 class="text-xl font-bold text-white flex items-center gap-2">
+        <span>📊</span>
+        <span>生存状态</span>
+      </h2>
+      <div
+        :class="[phaseBgClass, phaseBorderClass, 'flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all duration-300']"
+      >
+        <span class="text-base">{{ phaseIcon }}</span>
+        <span :class="[phaseClass, 'font-bold text-sm']">{{ phaseLabel }}</span>
+      </div>
+    </div>
     <div class="space-y-4">
       <div
         v-for="stat in stats"

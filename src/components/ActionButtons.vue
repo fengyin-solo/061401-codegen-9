@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import type { Phase } from '@/types/game'
+import { computed } from 'vue'
+
 interface ActionButton {
   label: string
   icon: string
@@ -15,6 +18,7 @@ interface Props {
   canHunt: boolean
   canDrink: boolean
   disabled: boolean
+  phase: Phase
 }
 
 const props = defineProps<Props>()
@@ -25,6 +29,10 @@ const emit = defineEmits<{
   hunt: []
   drink: []
 }>()
+
+const isNightPhase = computed(() => props.phase === 'night')
+
+const nightNotice = computed(() => isNightPhase.value && !props.disabled)
 
 const buttons: ActionButton[] = [
   {
@@ -72,17 +80,20 @@ const buttons: ActionButton[] = [
       <span>⚡</span>
       <span>行动</span>
     </h2>
-    <div class="grid grid-cols-2 gap-3">
+    <div v-if="nightNotice" class="mb-4 p-3 rounded-xl bg-indigo-900/30 border border-indigo-500/30 text-center">
+      <span class="text-indigo-400 text-sm font-medium">🌙 夜晚已至，等待天亮...</span>
+    </div>
+    <div class="grid grid-cols-2 gap-3" :class="{ 'opacity-50 pointer-events-none': isNightPhase }">
       <button
         v-for="(btn, index) in buttons"
         :key="btn.label"
         @click="btn.action"
-        :disabled="disabled || (index === 0 ? !canGatherWood : index === 1 ? !canGatherStone : index === 2 ? !canHunt : !canDrink)"
+        :disabled="disabled || isNightPhase || (index === 0 ? !canGatherWood : index === 1 ? !canGatherStone : index === 2 ? !canHunt : !canDrink)"
         :class="[
           btn.bgClass,
           'relative p-4 rounded-xl border border-game-border transition-all duration-200',
           'flex flex-col items-center justify-center gap-2 text-center',
-          disabled || (index === 0 ? !canGatherWood : index === 1 ? !canGatherStone : index === 2 ? !canHunt : !canDrink)
+          disabled || isNightPhase || (index === 0 ? !canGatherWood : index === 1 ? !canGatherStone : index === 2 ? !canHunt : !canDrink)
             ? 'opacity-40 cursor-not-allowed'
             : [btn.hoverClass, 'hover:scale-[1.02] hover:shadow-lg cursor-pointer active:scale-[0.98]'],
         ]"

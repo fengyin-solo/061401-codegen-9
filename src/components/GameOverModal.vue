@@ -1,16 +1,23 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import type { Phase } from '@/types/game'
+
 interface Props {
   show: boolean
   finalTurn: number
   highScore: number
   isNewRecord: boolean
+  finalPhase: Phase
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 
 const emit = defineEmits<{
   restart: []
 }>()
+
+const phaseLabel = computed(() => props.finalPhase === 'day' ? '白天' : '夜晚')
+const phaseIcon = computed(() => props.finalPhase === 'day' ? '☀️' : '🌙')
 </script>
 
 <template>
@@ -29,8 +36,13 @@ const emit = defineEmits<{
 
             <div class="bg-gray-800/50 rounded-2xl p-5 mb-6 space-y-3">
               <div class="flex justify-between items-center">
-                <span class="text-gray-400">生存回合</span>
-                <span class="text-2xl font-bold text-white">{{ finalTurn }}</span>
+                <span class="text-gray-400">生存天数</span>
+                <span class="text-2xl font-bold text-white">第 {{ finalTurn }} 天</span>
+              </div>
+              <div class="border-t border-gray-700"></div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-400">终结阶段</span>
+                <span class="text-lg font-bold text-white">{{ phaseIcon }} {{ phaseLabel }}</span>
               </div>
               <div class="border-t border-gray-700"></div>
               <div class="flex justify-between items-center">
