@@ -132,9 +132,7 @@ export function useGame() {
   }
 
   function resolveNight() {
-    state.value.phase = 'night'
-
-    addLog(`—— 夜幕降临，第 ${state.value.turn} 天结束 ——`, 'night')
+    addLog('你在黑夜中煎熬着等待黎明...', 'night')
 
     addLog(`夜间消耗：饥饿 +${nightDecay.hunger}，口渴 +${nightDecay.thirst}`, 'night')
     applyEffects({ hunger: nightDecay.hunger, thirst: nightDecay.thirst })
@@ -148,10 +146,16 @@ export function useGame() {
     checkGameOver()
 
     if (!state.value.isGameOver) {
+      addLog('东方泛起鱼肚白，新的一天开始了...', 'system')
       state.value.turn++
       state.value.phase = 'day'
-      addLog(`—— 第 ${state.value.turn} 天开始，天亮了 ——`, 'system')
+      addLog(`—— 第 ${state.value.turn} 天，天亮了 ——`, 'system')
     }
+  }
+
+  function advanceDay() {
+    if (state.value.phase !== 'night' || state.value.isGameOver) return
+    resolveNight()
   }
 
   function performAction(action: ActionType) {
@@ -171,7 +175,8 @@ export function useGame() {
     checkGameOver()
 
     if (!state.value.isGameOver) {
-      resolveNight()
+      state.value.phase = 'night'
+      addLog(`—— 夜幕降临，第 ${state.value.turn} 天结束 ——`, 'night')
     }
   }
 
@@ -205,12 +210,12 @@ export function useGame() {
     }
     logIdCounter = 0
     addLog('你醒来发现自己身处荒野中，需要想办法生存下去...', 'system')
-    addLog('—— 第 1 天开始，天亮了 ——', 'system')
+    addLog('—— 第 1 天，天亮了 ——', 'system')
   }
 
   loadHighScore()
   addLog('你醒来发现自己身处荒野中，需要想办法生存下去...', 'system')
-  addLog('—— 第 1 天开始，天亮了 ——', 'system')
+  addLog('—— 第 1 天，天亮了 ——', 'system')
 
   return {
     state,
@@ -223,6 +228,7 @@ export function useGame() {
     gatherStone,
     hunt,
     drink,
+    advanceDay,
     restart,
   }
 }

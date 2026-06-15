@@ -28,11 +28,10 @@ const emit = defineEmits<{
   gatherStone: []
   hunt: []
   drink: []
+  advanceDay: []
 }>()
 
 const isNightPhase = computed(() => props.phase === 'night')
-
-const nightNotice = computed(() => isNightPhase.value && !props.disabled)
 
 const buttons: ActionButton[] = [
   {
@@ -75,33 +74,61 @@ const buttons: ActionButton[] = [
 </script>
 
 <template>
-  <div class="bg-game-card rounded-2xl p-6 border border-game-border shadow-xl">
+  <div class="bg-game-card rounded-2xl p-6 border border-game-border shadow-xl min-h-[320px] flex flex-col">
     <h2 class="text-xl font-bold text-white mb-5 flex items-center gap-2">
-      <span>⚡</span>
-      <span>行动</span>
+      <span>{{ isNightPhase ? '🌙' : '⚡' }}</span>
+      <span>{{ isNightPhase ? '夜晚' : '行动' }}</span>
     </h2>
-    <div v-if="nightNotice" class="mb-4 p-3 rounded-xl bg-indigo-900/30 border border-indigo-500/30 text-center">
-      <span class="text-indigo-400 text-sm font-medium">🌙 夜晚已至，等待天亮...</span>
-    </div>
-    <div class="grid grid-cols-2 gap-3" :class="{ 'opacity-50 pointer-events-none': isNightPhase }">
-      <button
-        v-for="(btn, index) in buttons"
-        :key="btn.label"
-        @click="btn.action"
-        :disabled="disabled || isNightPhase || (index === 0 ? !canGatherWood : index === 1 ? !canGatherStone : index === 2 ? !canHunt : !canDrink)"
-        :class="[
-          btn.bgClass,
-          'relative p-4 rounded-xl border border-game-border transition-all duration-200',
-          'flex flex-col items-center justify-center gap-2 text-center',
-          disabled || isNightPhase || (index === 0 ? !canGatherWood : index === 1 ? !canGatherStone : index === 2 ? !canHunt : !canDrink)
-            ? 'opacity-40 cursor-not-allowed'
-            : [btn.hoverClass, 'hover:scale-[1.02] hover:shadow-lg cursor-pointer active:scale-[0.98]'],
-        ]"
-      >
-        <span class="text-3xl">{{ btn.icon }}</span>
-        <span class="text-white font-semibold text-sm">{{ btn.label }}</span>
-        <span class="text-gray-400 text-xs">{{ btn.description }}</span>
-      </button>
-    </div>
+
+    <!-- 白天：行动按钮 -->
+    <template v-if="!isNightPhase">
+      <div class="grid grid-cols-2 gap-3">
+        <button
+          v-for="(btn, index) in buttons"
+          :key="btn.label"
+          @click="btn.action"
+          :disabled="disabled || (index === 0 ? !canGatherWood : index === 1 ? !canGatherStone : index === 2 ? !canHunt : !canDrink)"
+          :class="[
+            btn.bgClass,
+            'relative p-4 rounded-xl border border-game-border transition-all duration-200',
+            'flex flex-col items-center justify-center gap-2 text-center',
+            disabled || (index === 0 ? !canGatherWood : index === 1 ? !canGatherStone : index === 2 ? !canHunt : !canDrink)
+              ? 'opacity-40 cursor-not-allowed'
+              : [btn.hoverClass, 'hover:scale-[1.02] hover:shadow-lg cursor-pointer active:scale-[0.98]'],
+          ]"
+        >
+          <span class="text-3xl">{{ btn.icon }}</span>
+          <span class="text-white font-semibold text-sm">{{ btn.label }}</span>
+          <span class="text-gray-400 text-xs">{{ btn.description }}</span>
+        </button>
+      </div>
+    </template>
+
+    <!-- 夜晚：等待天亮界面 -->
+    <template v-else>
+      <div class="flex-1 flex flex-col items-center justify-center space-y-5">
+        <div class="text-center space-y-2">
+          <div class="text-7xl animate-pulse">🌙</div>
+          <p class="text-indigo-300 font-medium">夜幕已降临</p>
+          <p class="text-gray-400 text-sm">
+            深夜的荒野充满未知，<br>等待天亮看看会发生什么...
+          </p>
+        </div>
+
+        <div class="w-full p-3 rounded-xl bg-indigo-900/30 border border-indigo-500/30 text-center">
+          <p class="text-indigo-400 text-xs">
+            ⚠️ 天亮后将结算夜间消耗和事件
+          </p>
+        </div>
+
+        <button
+          @click="emit('advanceDay')"
+          :disabled="disabled"
+          class="w-full py-4 px-6 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-lg rounded-xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-indigo-500/25 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          🌅 等待天亮
+        </button>
+      </div>
+    </template>
   </div>
 </template>

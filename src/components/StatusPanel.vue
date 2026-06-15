@@ -28,6 +28,8 @@ const phaseLabel = computed(() => props.phase === 'day' ? '白天' : '夜晚')
 const phaseClass = computed(() => props.phase === 'day' ? 'text-yellow-400' : 'text-indigo-400')
 const phaseBorderClass = computed(() => props.phase === 'day' ? 'border-yellow-500/30' : 'border-indigo-500/30')
 const phaseBgClass = computed(() => props.phase === 'day' ? 'bg-yellow-500/10' : 'bg-indigo-500/10')
+const cardBorderClass = computed(() => props.phase === 'day' ? 'border-yellow-500/20' : 'border-indigo-500/20')
+const cardGlowClass = computed(() => props.phase === 'day' ? 'shadow-yellow-500/5' : 'shadow-indigo-500/10')
 
 const stats = computed<StatItem[]>(() => [
   {
@@ -89,7 +91,7 @@ function isDanger(value: number, max: number, isReverse?: boolean): boolean {
 </script>
 
 <template>
-  <div class="bg-game-card rounded-2xl p-6 border border-game-border shadow-xl">
+  <div :class="['bg-game-card rounded-2xl p-6 border shadow-xl transition-all duration-500', cardBorderClass, cardGlowClass]">
     <div class="flex items-center justify-between mb-5">
       <h2 class="text-xl font-bold text-white flex items-center gap-2">
         <span>📊</span>

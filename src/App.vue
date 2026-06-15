@@ -6,7 +6,7 @@ import EventLog from '@/components/EventLog.vue'
 import GameOverModal from '@/components/GameOverModal.vue'
 import { useGame } from '@/composables/useGame'
 
-const { state, highScore, canPerformAction, isDay, isNight, gatherWood, gatherStone, hunt, drink, restart } = useGame()
+const { state, highScore, canPerformAction, isDay, isNight, gatherWood, gatherStone, hunt, drink, advanceDay, restart } = useGame()
 
 const isNewRecord = computed(() => state.value.turn >= highScore.value && state.value.turn > 0)
 
@@ -76,6 +76,7 @@ const phaseBorderClass = computed(() => isDay.value ? 'border-yellow-500/30' : '
             @gather-stone="gatherStone"
             @hunt="hunt"
             @drink="drink"
+            @advance-day="advanceDay"
           />
         </div>
 
